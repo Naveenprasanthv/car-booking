@@ -1,0 +1,12 @@
+[
+{
+"bookingId": 1,
+"passenger":"Dimitri",
+"carId":12
+},
+{
+"carId": 2,
+"price":"Eva",
+"origin":13
+}
+]

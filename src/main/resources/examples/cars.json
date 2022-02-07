@@ -1,0 +1,16 @@
+[
+{
+"carId": 1,
+"price":150,
+"origin":"Docklands",
+"desitation":"Dundrum",
+"carType":"Prime"
+},
+{
+"carId": 2,
+"price":200,
+"origin":"Rathmines",
+"desitation":"Portobello",
+"carType":"Sedan"
+}
+]

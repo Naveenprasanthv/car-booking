@@ -1,0 +1,12 @@
+[
+{
+"partnerId": 1,
+"partnerName":"TripathiShuttle",
+"numberOfCars":5
+},
+{
+"partnerId": 1,
+"partnerName":"StarShuttle",
+"numberOfCars":5
+}
+]

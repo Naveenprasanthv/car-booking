@@ -1,0 +1,40 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="cars_json" format="json">
+      <types:shape format="weave" example="examples/cars-1.json"><![CDATA[%dw 2.0
+
+type cars_json = Array<{|  carId: Number {"typeId": "int"},   price: Number {"typeId": "int"},   origin: String,   desitation: String,   carType: String|}> {"example": "[{\\\"carId\\\":1,\\\"price\\\":150,\\\"origin\\\":\\\"Docklands\\\",\\\"desitation\\\":\\\"Dundrum\\\",\\\"carType\\\":\\\"Prime\\\"},{\\\"carId\\\":2,\\\"price\\\":200,\\\"origin\\\":\\\"Rathmines\\\",\\\"desitation\\\":\\\"Portobello\\\",\\\"carType\\\":\\\"Sedan\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="cars_csv" format="csv">
+      <types:shape format="weave" example="examples/cars-1.csv"><![CDATA[%dw 2.0
+
+type cars_csv = Array<{|  carId: Number,   price: Number,   origin: String,   desitation: String,   carType: String|}> {"isQuotedString": "false",
+"header": "true",
+"headerLineNumber": "0"}
+
+]]></types:shape>
+      <types:properties>
+        <types:property name="headerLineNumber" value="0"/>
+        <types:property name="header" value="true"/>
+        <types:property name="isQuotedString" value="false"/>
+      </types:properties>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#52efc65f-feb3-4399-afe6-7f647ba0ccf3">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="cars_json[]"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:message>
+          <types:payload type="cars_csv[]"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="6767f596-e63f-46bd-8802-cf6dbfc65a64" >
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="e319fdf7-45ee-49b2-b572-f4f3033a1442" file="config.yaml" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="0d81a20f-698c-4bd3-8999-d0088d44efb2">
+		<db:my-sql-connection host="${mysql.server}" port="${mysql.port}" user="${mysql.username}" password="${mysql.password}" database="${mysql.dbname}" />
+	</db:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="6c37509e-52a9-4fab-a7f0-32845be848b2" >
+		<file:connection workingDir="C:\Users\naveenvprasanth\AnypointStudio\studio-workspace\car-booking\booking_records" />
+	</file:config>
+
+</mule>

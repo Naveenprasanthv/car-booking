@@ -9,4 +9,5 @@ mysql:
   password: "4eYEIs3lFb"
   port: "3306"
 
-
+app:
+  home: "C:/Users/kowshalyab/Documents/GitHub/car-booking/src/main/resources/examples"

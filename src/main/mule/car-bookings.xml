@@ -24,28 +24,16 @@ payload]]></ee:set-payload>
 				<logger level="INFO" doc:name="End" doc:id="d8b63ba6-92bc-40e5-8080-d5af5d041bc7" message="Flow Ended" />
 			</when>
 			<otherwise>
-				<ee:transform doc:name="Transform Message" doc:id="52efc65f-feb3-4399-afe6-7f647ba0ccf3">
-					<ee:message>
-						<ee:set-payload><![CDATA[%dw 2.0
-output application/csv
----
-payload map ( payload01 , indexOfPayload01 ) -> {
-	carId: payload01.carId,
-	price: payload01.price,
-	origin: payload01.origin,
-	desitation: payload01.desitation,
-	carType: payload01.carType
-}]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars.csv" mode="APPEND" />
+				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars.csv" mode="APPEND" >
+					<file:content ><![CDATA[#["\n" ++ payload]]]></file:content>
+				</file:write>
 				<ee:transform doc:name="Json Payload" doc:id="f00b3108-c313-4432-a100-773075184725">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	Message: "car has been added successfully"
+	Message: "Car has been added successfully."
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
@@ -54,9 +42,11 @@ output application/json
 	
 </flow>
 	<flow name="getCarsByID" doc:id="e2c397cb-9e52-4dbd-b0b3-c71cae5134bf">
-		<http:listener doc:name="Listener" doc:id="dd6f08e3-5183-4d1c-84a3-3f5c3c4e0569" config-ref="HTTP_Listener_config" path="/cars/{carId}"/>
-		<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars.csv"/>
-		<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
+		<http:listener doc:name="Listener" doc:id="dd6f08e3-5183-4d1c-84a3-3f5c3c4e0569" config-ref="HTTP_Listener_config" path="/cars/{carId}" allowedMethods="GET, DELETE"/>
+		<choice doc:name="Choice" doc:id="507a3349-8099-45bb-ad4b-1388302427a5" >
+			<when expression='#[attributes.method == "GET"]'>
+				<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars.csv" />
+				<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -64,10 +54,15 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<logger level="INFO" doc:name="End" doc:id="c01d912c-6f8b-4804-8391-de8a6aa4be0b" message="Flow Ended" />
+				<logger level="INFO" doc:name="End" doc:id="c01d912c-6f8b-4804-8391-de8a6aa4be0b" message="Flow Ended" />
+			</when>
+			<otherwise >
+				<file:delete doc:name="Delete" doc:id="5d426853-7a3a-48ca-90f3-b2ed448ed148" config-ref="File_Config" path="cars.cav"/>
+			</otherwise>
+		</choice>
 	</flow>
 	<flow name="updateCarsByID" doc:id="43dadce0-7f6d-4d37-be25-e377f037070d">
-		<db:update doc:name="Update Flights" doc:id="c8ddbcbe-e034-4d37-847e-d4712d84222e" config-ref="Database_Config">
+		<db:update doc:name="Update Flights" doc:id="c8ddbcbe-e034-4d37-847e-d4712d84222e">
 			<db:sql><![CDATA[update flights1
 set planeType = :types, departureDate = :date
 where flightId = :id]]></db:sql>
@@ -77,24 +72,6 @@ where flightId = :id]]></db:sql>
 	types : payload.planeType
 }]]]></db:input-parameters>
 		</db:update>
-	</flow>
-	<flow name="deleteCarsByID" doc:id="80651a22-581f-4d49-9aa7-47b69ddd679f">
-		<db:delete doc:name="Delete Flights" doc:id="a68c0834-dd11-4a88-a9ce-abaa20db70eb" config-ref="Database_Config">
-			<db:sql><![CDATA[delete from flights1 where flightId = :id]]></db:sql>
-			<db:input-parameters><![CDATA[#[{
-	id : attributes.uriParams.flightsId
-}]]]></db:input-parameters>
-		</db:delete>
-		<ee:transform doc:name="Json Payload" doc:id="13dad0de-a100-44ae-9ef2-142f3dc46052">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	Message: "Your flight has been removed permanently"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
 	</flow>
 	<flow name="getBookings" doc:id="7ba74739-d2d4-4662-8054-ac25a4bc0aba">
 		<http:listener doc:name="Listener" doc:id="3715ca43-2c87-4a58-8bab-96fac294e8ba" config-ref="HTTP_Listener_config" path="/bookings"/>
@@ -130,7 +107,7 @@ payload.passenger
 ]]></ee:set-variable>
 			</ee:variables>
 		</ee:transform>
-		<db:select doc:name="Select" doc:id="7e882fe0-9f9b-4aed-ae55-40e6f0bf91bc" config-ref="Database_Config">
+		<db:select doc:name="Select" doc:id="7e882fe0-9f9b-4aed-ae55-40e6f0bf91bc">
 			<db:sql ><![CDATA[select flightId from flights1 where origin= :origin and destination= :destination and planeType= :service]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	origin: payload.origin,
@@ -139,7 +116,7 @@ payload.passenger
 }]]]></db:input-parameters>
 		</db:select>
 		<set-variable value="#[payload.flightId[0]]" doc:name="Set Variable" doc:id="81ecafb2-d158-44ea-8235-7fb08cb01633" variableName="flightId"/>
-		<db:insert doc:name="Insert" doc:id="82e48cdb-9110-4c87-bc8a-092c6abeb25f" config-ref="Database_Config">
+		<db:insert doc:name="Insert" doc:id="82e48cdb-9110-4c87-bc8a-092c6abeb25f">
 			<db:sql ><![CDATA[insert into booking (passenger,flightId) values (:pass, :id);]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	pass: vars.passenger,
@@ -158,7 +135,7 @@ output application/json
 		</ee:transform>
 	</flow>
 	<flow name="getBookingsByID" doc:id="060aef88-7420-4acd-b93d-7234cbf80bac">
-		<db:select doc:name="GetBookingByID" doc:id="224038fe-6ea3-40f8-9247-f06cf5bfa804" config-ref="Database_Config">
+		<db:select doc:name="GetBookingByID" doc:id="224038fe-6ea3-40f8-9247-f06cf5bfa804">
 			<db:sql><![CDATA[select * from booking where bookingId = :bookingId]]></db:sql>
 			<db:input-parameters><![CDATA[#[{bookingId : attributes.uriParams.bookingId}]]]></db:input-parameters>
 		</db:select>
@@ -173,7 +150,7 @@ payload]]></ee:set-payload>
 		<logger level="INFO" doc:name="End" doc:id="f2d2e78c-2938-4db2-9d75-9f07f48f87ab" message="Flow Ended" />
 	</flow>
 	<flow name="updateBookingsByID" doc:id="a839c66d-c601-4519-8e10-03ee6f14a658">
-		<db:update doc:name="Update Bookings" doc:id="b80ea0d6-f4a5-44ad-9108-5ab04691f801" config-ref="Database_Config">
+		<db:update doc:name="Update Bookings" doc:id="b80ea0d6-f4a5-44ad-9108-5ab04691f801">
 			<db:sql><![CDATA[update booking
 set passenger = :name
 where bookingId = :id]]></db:sql>
@@ -184,7 +161,7 @@ where bookingId = :id]]></db:sql>
 		</db:update>
 	</flow>
 	<flow name="deleteBookingsByID" doc:id="35861b73-8c65-445c-9cff-c7cb53b733d7">
-		<db:delete doc:name="Delete Booking" doc:id="9629b4dc-3ad0-456d-a2bc-0ca1547824d7" config-ref="Database_Config">
+		<db:delete doc:name="Delete Booking" doc:id="9629b4dc-3ad0-456d-a2bc-0ca1547824d7">
 			<db:sql><![CDATA[delete from booking where bookingId = :id]]></db:sql>
 			<db:input-parameters><![CDATA[#[{
 	id : attributes.uriParams.bookingId
@@ -215,7 +192,7 @@ payload]]></ee:set-payload>
 		<logger level="INFO" doc:name="End" doc:id="2a582c87-045f-4554-b029-ba9e0c2e1348" message="Flow Ended"/>
 	</flow>
 	<flow name="postPartners" doc:id="4780ef34-c46c-4506-bbbe-8861264be8e7">
-		<db:insert doc:name="New Partner" doc:id="688d255b-3bd8-4a4b-a1ba-ce620921659e" config-ref="Database_Config">
+		<db:insert doc:name="New Partner" doc:id="688d255b-3bd8-4a4b-a1ba-ce620921659e">
 			<db:sql ><![CDATA[INSERT INTO partners
 (partnerName,services,numberOfFlights)
 VALUES (:name,:service, :no)]]></db:sql>
@@ -237,7 +214,7 @@ output application/json
 		</ee:transform>
 	</flow>
 	<flow name="getPartnersByID" doc:id="ed5eb6ed-ba89-4be1-b14d-d609b30dcaa4" >
-		<db:select doc:name="GetPartnersByID" doc:id="178e7758-1917-4542-9579-4390e5693994" config-ref="Database_Config">
+		<db:select doc:name="GetPartnersByID" doc:id="178e7758-1917-4542-9579-4390e5693994">
 			<db:sql ><![CDATA[select * from partners where partnerId = :partnerId]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{partnerId : attributes.uriParams.partnersId}]]]></db:input-parameters>
 		</db:select>
@@ -252,7 +229,7 @@ payload]]></ee:set-payload>
 		<logger level="INFO" doc:name="End" doc:id="74600085-552e-4519-a99b-5eef881d7f8e" message="Flow Ended" />
 	</flow>
 	<flow name="updatePartnersByID" doc:id="f21e5d4b-1dd7-4b46-9307-d6c080cb9f4f">
-		<db:update doc:name="Update Partners" doc:id="477f8860-bebc-4b0e-ad71-89116c751b73" config-ref="Database_Config">
+		<db:update doc:name="Update Partners" doc:id="477f8860-bebc-4b0e-ad71-89116c751b73">
 			<db:sql><![CDATA[update partners
 set services = :service, numberOfFlights = :no
 where partnerId = :id]]></db:sql>
@@ -264,7 +241,7 @@ where partnerId = :id]]></db:sql>
 		</db:update>
 	</flow>
 	<flow name="deletePartnersByID" doc:id="105179b2-a6d0-46e5-ad02-d516967ed3f3" >
-		<db:delete doc:name="Delete Partners" doc:id="c4d86aa8-bd17-4f65-b6fb-ba6f992b933c" config-ref="Database_Config">
+		<db:delete doc:name="Delete Partners" doc:id="c4d86aa8-bd17-4f65-b6fb-ba6f992b933c">
 			<db:sql ><![CDATA[delete from partners where partnerId = :id]]></db:sql>
 			<db:input-parameters ><![CDATA[#[{
 	id : attributes.uriParams.partnersId

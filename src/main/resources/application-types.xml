@@ -23,18 +23,4 @@ type cars_csv = Array<{|  carId: Number,   price: Number,   origin: String,   de
       </types:properties>
     </types:type>
   </types:catalog>
-  <types:enrichment select="#52efc65f-feb3-4399-afe6-7f647ba0ccf3">
-    <types:processor-declaration>
-      <types:input-event>
-        <types:message>
-          <types:payload type="cars_json[]"/>
-        </types:message>
-      </types:input-event>
-      <types:output-event>
-        <types:message>
-          <types:payload type="cars_csv[]"/>
-        </types:message>
-      </types:output-event>
-    </types:processor-declaration>
-  </types:enrichment>
 </types:mule>

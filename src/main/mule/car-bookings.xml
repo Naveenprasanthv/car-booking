@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 		<http:listener doc:name="Listener" doc:id="df972c75-d891-48f4-ae4b-f61139cffd3c" config-ref="HTTP_Listener_config" path="/cars" allowedMethods="GET,POST"/>
 		<choice doc:name="Choice" doc:id="70833f34-d6ab-4b19-9cc9-bb7b89941a85" >
 			<when expression="#[attributes.method == 'GET']">
-				<file:read doc:id="f01b9949-d472-4051-bd62-e859c8f4e9c4" config-ref="File_Config" path="cars.csv" />
+				<file:read doc:id="f01b9949-d472-4051-bd62-e859c8f4e9c4" config-ref="File_Config" path="cars-1.csv" />
 				<ee:transform doc:name="Json Payload" doc:id="26b47312-26be-4322-90b0-d593c1700718">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
@@ -24,7 +24,7 @@ payload]]></ee:set-payload>
 				<logger level="INFO" doc:name="End" doc:id="d8b63ba6-92bc-40e5-8080-d5af5d041bc7" message="Flow Ended" />
 			</when>
 			<otherwise>
-				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars.csv" mode="APPEND" >
+				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars-1.csv" mode="APPEND" >
 					<file:content ><![CDATA[#["\n" ++ payload]]]></file:content>
 				</file:write>
 				<ee:transform doc:name="Json Payload" doc:id="f00b3108-c313-4432-a100-773075184725">
@@ -43,35 +43,44 @@ output application/json
 </flow>
 	<flow name="getCarsByID" doc:id="e2c397cb-9e52-4dbd-b0b3-c71cae5134bf">
 		<http:listener doc:name="Listener" doc:id="dd6f08e3-5183-4d1c-84a3-3f5c3c4e0569" config-ref="HTTP_Listener_config" path="/cars/{carId}" allowedMethods="GET, DELETE"/>
+		<set-variable value="#[attributes.uriParams.carId]" doc:name="Set Variable" doc:id="4f0db1b2-dfbe-4f77-9ee8-b61485eb2cd8" variableName="id" />
 		<choice doc:name="Choice" doc:id="507a3349-8099-45bb-ad4b-1388302427a5" >
 			<when expression='#[attributes.method == "GET"]'>
-				<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars.csv" />
+				<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars-1.csv" />
 				<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
+output application/csv header = false
 ---
-payload]]></ee:set-payload>
+payload map ((item, index) -> {
+	carId: item.carId,
+	price: item.price,
+	origin: item.origin,
+	desitation: item.desitation,
+	carType: item.carType
+}) filter ((item, index) -> item.carId as String == vars.id )]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 				<logger level="INFO" doc:name="End" doc:id="c01d912c-6f8b-4804-8391-de8a6aa4be0b" message="Flow Ended" />
 			</when>
 			<otherwise >
-				<file:delete doc:name="Delete" doc:id="5d426853-7a3a-48ca-90f3-b2ed448ed148" config-ref="File_Config" path="cars.cav"/>
+				<file:delete doc:name="Delete" doc:id="5d426853-7a3a-48ca-90f3-b2ed448ed148" config-ref="File_Config" path="cars-1.csv" />
+				<ee:transform doc:name="Transform Message" doc:id="86d7c0d5-683b-43ea-b3bb-26afefc5db2c" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Car has been removed permanently."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
 			</otherwise>
 		</choice>
 	</flow>
 	<flow name="updateCarsByID" doc:id="43dadce0-7f6d-4d37-be25-e377f037070d">
-		<db:update doc:name="Update Flights" doc:id="c8ddbcbe-e034-4d37-847e-d4712d84222e">
-			<db:sql><![CDATA[update flights1
-set planeType = :types, departureDate = :date
-where flightId = :id]]></db:sql>
-			<db:input-parameters><![CDATA[#[{
-	id : attributes.uriParams.flightsId,
-	date : payload.departureDate,
-	types : payload.planeType
-}]]]></db:input-parameters>
-		</db:update>
+		<file:read doc:name="Read" doc:id="5abddba9-b6bf-40c5-9b47-fd1fefae9d50" config-ref="File_Config" path="cars-1.csv"/>
+
 	</flow>
 	<flow name="getBookings" doc:id="7ba74739-d2d4-4662-8054-ac25a4bc0aba">
 		<http:listener doc:name="Listener" doc:id="3715ca43-2c87-4a58-8bab-96fac294e8ba" config-ref="HTTP_Listener_config" path="/bookings"/>

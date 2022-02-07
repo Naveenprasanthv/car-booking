@@ -1,0 +1,5 @@
+carId,price,origin,desitation,carType
+1,150,Docklands,Dundrum,Prime
+2,200,Rathmines,Portobello,Sedan
+3,250,Ranelagh,Drumcondra,Nano
+4,400,Dalkey,D4,SUV

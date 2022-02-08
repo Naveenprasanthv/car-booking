@@ -11,7 +11,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 	</http:listener-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="e319fdf7-45ee-49b2-b572-f4f3033a1442" file="config.yaml" />
 	<file:config name="File_Config" doc:name="File Config" doc:id="6c37509e-52a9-4fab-a7f0-32845be848b2" >
-		<file:connection workingDir="${app.home}" />
+		<file:connection workingDir="C:\Users\kowshalyab\Documents\GitHub\car-booking\src\main\resources\examples" />
 	</file:config>
 
 </mule>

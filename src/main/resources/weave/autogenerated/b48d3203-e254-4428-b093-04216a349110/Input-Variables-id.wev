@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_b48d3203_e254_4428_b093_04216a349110_Input_Variables_id = String | Null
+

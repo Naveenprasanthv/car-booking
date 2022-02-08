@@ -23,9 +23,9 @@ payload]]></ee:set-payload>
 		</ee:transform>
 				<logger level="INFO" doc:name="End" doc:id="d8b63ba6-92bc-40e5-8080-d5af5d041bc7" message="Flow Ended" />
 			</when>
-			<otherwise>
-				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars.csv" mode="APPEND" >
-					<file:content ><![CDATA[#["\n" ++ payload]]]></file:content>
+			<when expression="#[attributes.method == 'POST']">
+				<file:write doc:name="Write" doc:id="2b3edd6f-f172-4ee8-b319-f20749d327e4" config-ref="File_Config" path="cars.csv" mode="APPEND">
+					<file:content><![CDATA[#["\n" ++ payload]]]></file:content>
 				</file:write>
 				<ee:transform doc:name="Json Payload" doc:id="f00b3108-c313-4432-a100-773075184725">
 			<ee:message>
@@ -37,17 +37,101 @@ output application/json
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Json Payload" doc:id="acbffaac-0127-459a-9184-efd662ed5871">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
 			</otherwise>
 		</choice>
 	
 </flow>
 	<flow name="getCarsByID" doc:id="e2c397cb-9e52-4dbd-b0b3-c71cae5134bf">
-		<http:listener doc:name="Listener" doc:id="dd6f08e3-5183-4d1c-84a3-3f5c3c4e0569" config-ref="HTTP_Listener_config" path="/cars/{carId}" allowedMethods="GET, DELETE"/>
+		<http:listener doc:name="Listener" doc:id="dd6f08e3-5183-4d1c-84a3-3f5c3c4e0569" config-ref="HTTP_Listener_config" path="/cars/{carId}" allowedMethods="GET, DELETE, PATCH"/>
 		<set-variable value="#[attributes.uriParams.carId]" doc:name="Set Variable" doc:id="4f0db1b2-dfbe-4f77-9ee8-b61485eb2cd8" variableName="id" />
 		<choice doc:name="Choice" doc:id="507a3349-8099-45bb-ad4b-1388302427a5" >
 			<when expression='#[attributes.method == "GET"]'>
-				<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars.csv" />
-				<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
+				<flow-ref doc:name="Flow Reference" doc:id="b601559c-31d7-4057-9a9b-c6466e077a8f" name="getCarsById"/>
+			</when>
+			<when expression='#[attributes.method == "PATCH"]'>
+				<ee:transform doc:name="Variables" doc:id="9b01fca0-680a-4c4a-9991-9843018dd06f">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="dest" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.desitation]]></ee:set-variable>
+						<ee:set-variable variableName="ctype" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.carType]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<file:read doc:name="Read" doc:id="2bd7028b-99de-4fab-8dc4-87f76db0cce1" config-ref="File_Config" path="cars.csv"/>
+				<ee:transform doc:name="Json Payload" doc:id="20dcb150-85ec-4e01-86fa-cb41bd9f7f67">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> {
+	carId: item.carId,
+	price: item.price,
+	origin: item.origin,
+	desitation: item.desitation,
+	carType: item.carType
+}) filter ((item, index) -> item.carId == vars.id )]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Variables" doc:id="7bad4eec-620e-4b69-9e44-a1e7a4b24491">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="edited" ><![CDATA[%dw 2.0
+output application/csv header = false
+--- 
+payload map ((item, index) -> {
+	carId: item.carId,
+	price: item.price,
+	origin: item.origin,
+	desitation: vars.dest,
+	carType: vars.ctype
+})]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="ba61ea2a-9761-4f0f-ae6e-066a5c5cd71d" name="deleteCarsById"/>
+				<file:write doc:name="Write" doc:id="ac54963f-384c-4b2d-8781-ccef16360875" config-ref="File_Config" path="cars.csv" mode="APPEND">
+					<file:content ><![CDATA[#[vars.edited]]]></file:content>
+				</file:write>
+				<set-payload value='Your destination and service type has been updated successfully.' doc:name="Json Payload" doc:id="a416f5c5-c1b2-4715-9040-b93968c9cfaa" />
+			</when>
+			<when expression="#[attributes.method == 'DELETE']">
+				<flow-ref doc:name="Flow Reference" doc:id="aa60c474-a2de-44d7-829f-b1021dd14554" name="deleteCarsById" />
+			</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="1f8f6ed4-2586-4193-87c6-7a1c33eecafa">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getCarsById" doc:id="b48d3203-e254-4428-b093-04216a349110">
+		<file:read doc:name="Read" doc:id="48856c00-e149-49f9-8930-f6f8947ba46b" config-ref="File_Config" path="cars.csv" />
+		<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/csv header = false
@@ -61,209 +145,166 @@ payload map ((item, index) -> {
 }) filter ((item, index) -> item.carId as String == vars.id )]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-				<logger level="INFO" doc:name="End" doc:id="c01d912c-6f8b-4804-8391-de8a6aa4be0b" message="Flow Ended" />
+	</flow>
+	<flow name="deleteCarsById" doc:id="555f6e50-e3a8-4424-a5c6-4cfa5486c40e" >
+		<file:read doc:name="Read" doc:id="146600d6-106d-4871-9245-26cb24e98a58" config-ref="File_Config" path="cars.csv" />
+		<ee:transform doc:name="Json Payload" doc:id="86d7c0d5-683b-43ea-b3bb-26afefc5db2c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/csv 
+---
+payload map ((item, index) -> {
+	carId: item.carId,
+	price: item.price,
+	origin: item.origin,
+	desitation: item.desitation,
+	carType: item.carType
+}) filter ((item, index) -> item.carId as String != vars.id )]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+		<file:write doc:name="Write" doc:id="3a73de01-3155-4c33-81f7-e1b4d22e5ee9" config-ref="File_Config" path="cars.csv" />
+		<set-payload value="Your Car has been removed successfully." doc:name="Json Payload" doc:id="e352d0ce-efaf-46c2-86c6-b3e4a88ab254" />
+	</flow>
+	<flow name="getPartners" doc:id="97873076-20ed-43e8-a1bd-281e8b4d82d8" >
+		<http:listener doc:name="Listener" doc:id="a49463ba-a7d6-4c5f-bb34-8b89e4a895e3" config-ref="HTTP_Listener_config" path="/partners"/>
+		<choice doc:name="Choice" doc:id="3ab13405-cf17-4d1a-ac04-ac83961cd86d" >
+			<when expression="#[attributes.method == 'GET']">
+				<file:read doc:name="Read" doc:id="579e6a15-8ee1-4766-b053-178373eb3b87" config-ref="File_Config" path="carPartners.csv"/>
+				<ee:transform doc:name="Json Payload" doc:id="670da621-63e4-43b3-90b0-138363caf7e5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header = false
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="8ea35153-5467-40d9-ada6-b6830f8ad44f" message="Flow Ended"/>
 			</when>
-			<otherwise >
-				<ee:transform doc:name="Transform Message" doc:id="86d7c0d5-683b-43ea-b3bb-26afefc5db2c" >
+			<when expression="#[attributes.method == 'POST']">
+				<file:write doc:name="Write" doc:id="c1f70529-2745-44ce-b0bf-b3f9a8275c0f" config-ref="File_Config" path="carPartners.csv" mode="APPEND">
+					<file:content ><![CDATA[#['\n' ++ payload]]]></file:content>
+				</file:write>
+				<ee:transform doc:name="Json Payload" doc:id="83b6052b-f9df-4675-b371-a653f5f9ab4c" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
 output application/json
 ---
 {
-	"Message": "Car has been removed permanently."
+	Message: "Partner has been added successfully."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Json Payload" doc:id="56a0db86-02ad-4f49-9289-3c456e998f19" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
 }]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
 			</otherwise>
 		</choice>
 	</flow>
-	<flow name="updateCarsByID" doc:id="43dadce0-7f6d-4d37-be25-e377f037070d">
-		<file:read doc:name="Read" doc:id="5abddba9-b6bf-40c5-9b47-fd1fefae9d50" config-ref="File_Config" path="cars-1.csv"/>
+	<flow name="getPartnerByID" doc:id="136ca13e-f309-4808-9797-dc0e71a2bac0" >
+		<http:listener doc:name="Listener" doc:id="f621c918-0da1-462e-98a7-02acb7a5ab96" config-ref="HTTP_Listener_config" path="partners/{partnerId}"/>
+		<set-variable value="#[attributes.uriParams.partnerId]" doc:name="Set Variable" doc:id="3066b41d-685a-4385-ba24-6622e8988699" variableName="pid"/>
+		<choice doc:name="Choice" doc:id="502541d9-bc61-40ab-8c65-ccd0c44ba451" >
+			<when expression="#[attributes.method == 'GET']">
+				<flow-ref doc:name="Flow Reference" doc:id="261c06a8-ca13-4143-989d-407d3e2a9d8d" name="getPartnersById"/>
+			</when>
+			<when expression="#[attributes.method == 'PATCH']">
+				<ee:transform doc:name="Variables" doc:id="9a119869-9ac2-49d3-8b50-020d73f917dc">
+					<ee:message>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="no" ><![CDATA[payload.numberOfCars]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<file:read doc:name="Read" doc:id="815c138f-5a95-499e-b2ab-6e7e815d530c" config-ref="File_Config" path="carPartners.csv"/>
+				<ee:transform doc:name="Json Payload" doc:id="e90e0a29-bb69-451f-8193-1bd28cb89169" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ((item, index) -> {
+	partnerId: item.partnerId,
+	partnerName: item.partnerName,
+	numberOfCars: item.numberOfCars
+}) filter ((item, index) -> item.partnerId as String == vars.pid )]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Variables" doc:id="3653e793-944f-4c60-a122-38e787d7d6ac" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="edited" ><![CDATA[%dw 2.0
+output application/csv header = false
+---
+payload map ((item, index) -> {
+	partnerId: item.partnerId,
+	partnerName: item.partnerName,
+	numberOfCars: vars.no
+}) filter ((item, index) -> item.partnerId as String == vars.pid )]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="2f3edfcd-5930-4c8e-baa1-fa4ce875f2ca" name="deletePartnersById"/>
+				<file:write doc:name="Write" doc:id="f1e60912-359d-4014-9e9f-86c7d7465746" config-ref="File_Config" path="carPartners.csv" mode="APPEND">
+					<file:content ><![CDATA[#[vars.edited]]]></file:content>
+				</file:write>
+				<set-payload value="Your car numbers has been updated successfully." doc:name="Json Payload" doc:id="1c2e42ca-d0dd-48e4-ada5-477f8771690c" />
+			</when>
+			<when expression="#[attributes.method == 'DELETE']">
+				<flow-ref doc:name="Flow Reference" doc:id="acf4c724-6a79-48f2-9279-537410e6aacb" name="deletePartnersById"/>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Json Payload" doc:id="fffdb544-eb95-44d1-8c47-e5fe811b86a2" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getPartnersById" doc:id="8350c647-44b6-4c88-9083-83d25e591bb0" >
+		<file:read doc:name="Read" doc:id="cbf64487-43b6-4c5d-ba71-05f17904dd52" config-ref="File_Config" path="carPartners.csv"/>
+		<ee:transform doc:name="Json Payload" doc:id="2c690dc8-5f68-4e85-9746-aee49540f08f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header = false
+---
+payload map ((item, index) -> {
+	partnerId: item.partnerId,
+	partnerName: item.partnerName,
+	numberOfCars: item.numberOfCars
+}) filter ((item, index) -> item.partnerId as String == vars.pid )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deletePartnersById" doc:id="d65ee9ab-4d56-422d-9927-bf4768e4979b" >
+		<file:read doc:name="Read" doc:id="66f5ebb9-aa01-4e33-a96f-65f96621114b" config-ref="File_Config" path="carPartners.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="712ada78-3d91-472b-8b55-d7dfdc77bdb2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv 
+---
+payload map ((item, index) -> {
+	partnerId: item.partnerId,
+	partnerName: item.partnerName,
+	numberOfCars: item.numberOfCars
+}) filter ((item, index) -> item.partnerId != vars.pid )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="76880a9b-e013-4b73-ab19-b34816c6f694" config-ref="File_Config" path="carPartners.csv"/>
+		<set-payload value="Your Partner has been removed successfully." doc:name="JsonPayload" doc:id="5ce8ed96-140e-448a-924f-20a040edc68d" />
+	</flow>
 
-	</flow>
-	<flow name="getBookings" doc:id="7ba74739-d2d4-4662-8054-ac25a4bc0aba">
-		<http:listener doc:name="Listener" doc:id="3715ca43-2c87-4a58-8bab-96fac294e8ba" config-ref="HTTP_Listener_config" path="/bookings"/>
-		<file:read doc:name="getBookings" doc:id="e82b67be-1c75-4992-952e-543242cffc5e" config-ref="File_Config" path="carbooking.csv"/>
-		<ee:transform doc:name="Json Payload" doc:id="5344df25-b935-4613-8ea1-d8c4be807454">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="End" doc:id="4dcfcc52-a0a9-4d10-8ff8-fb138893100a" message="Flow Ended" />
-	</flow>
-	<flow name="postBookings" doc:id="343f5777-4b23-473e-9118-3d85f128a5af">
-		<ee:transform doc:name="Transform Message" doc:id="026c7e26-693e-4b86-a09c-0c9f454219f9" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	origin: payload.bookingDetails.value.origin,
-	destination: payload.bookingDetails.value.destination,
-	service: payload.bookingDetails.value.plane.planeType
-}
-]]></ee:set-payload>
-			</ee:message>
-			<ee:variables >
-				<ee:set-variable variableName="passenger" ><![CDATA[%dw 2.0
-output application/json
----
-payload.passenger
-]]></ee:set-variable>
-			</ee:variables>
-		</ee:transform>
-		<db:select doc:name="Select" doc:id="7e882fe0-9f9b-4aed-ae55-40e6f0bf91bc">
-			<db:sql ><![CDATA[select flightId from flights1 where origin= :origin and destination= :destination and planeType= :service]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	origin: payload.origin,
-	destination : payload.destination,
-	service: payload.service
-}]]]></db:input-parameters>
-		</db:select>
-		<set-variable value="#[payload.flightId[0]]" doc:name="Set Variable" doc:id="81ecafb2-d158-44ea-8235-7fb08cb01633" variableName="flightId"/>
-		<db:insert doc:name="Insert" doc:id="82e48cdb-9110-4c87-bc8a-092c6abeb25f">
-			<db:sql ><![CDATA[insert into booking (passenger,flightId) values (:pass, :id);]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	pass: vars.passenger,
-	id: vars.flightId
-}]]]></db:input-parameters>
-		</db:insert>
-		<ee:transform doc:name="Transform Message" doc:id="78451f03-84b2-40e4-9132-0d407be57212" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	Message: "Your flight has been booked successfully."
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-	</flow>
-	<flow name="getBookingsByID" doc:id="060aef88-7420-4acd-b93d-7234cbf80bac">
-		<db:select doc:name="GetBookingByID" doc:id="224038fe-6ea3-40f8-9247-f06cf5bfa804">
-			<db:sql><![CDATA[select * from booking where bookingId = :bookingId]]></db:sql>
-			<db:input-parameters><![CDATA[#[{bookingId : attributes.uriParams.bookingId}]]]></db:input-parameters>
-		</db:select>
-		<ee:transform doc:name="Json Payload" doc:id="1f26f905-6dd3-4b32-923a-d8a188826c40">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="End" doc:id="f2d2e78c-2938-4db2-9d75-9f07f48f87ab" message="Flow Ended" />
-	</flow>
-	<flow name="updateBookingsByID" doc:id="a839c66d-c601-4519-8e10-03ee6f14a658">
-		<db:update doc:name="Update Bookings" doc:id="b80ea0d6-f4a5-44ad-9108-5ab04691f801">
-			<db:sql><![CDATA[update booking
-set passenger = :name
-where bookingId = :id]]></db:sql>
-			<db:input-parameters><![CDATA[#[{
-	id : attributes.uriParams.bookingId,
-	name : payload.passenger
-}]]]></db:input-parameters>
-		</db:update>
-	</flow>
-	<flow name="deleteBookingsByID" doc:id="35861b73-8c65-445c-9cff-c7cb53b733d7">
-		<db:delete doc:name="Delete Booking" doc:id="9629b4dc-3ad0-456d-a2bc-0ca1547824d7">
-			<db:sql><![CDATA[delete from booking where bookingId = :id]]></db:sql>
-			<db:input-parameters><![CDATA[#[{
-	id : attributes.uriParams.bookingId
-}]]]></db:input-parameters>
-		</db:delete>
-		<ee:transform doc:name="Json Payload" doc:id="f00f5e0c-0cbe-4c40-9ecc-2197a6a9c4f0">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	Message: "Your flight booking has been cancelled."
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-	</flow>
-	<flow name="getPartners" doc:id="a0f201e4-8c2c-4c21-9bd3-3d78f7009a24" >
-		<http:listener doc:name="Listener" doc:id="0813a1f1-91c4-4a56-bcf7-12e59bab81c1" config-ref="HTTP_Listener_config" path="/partners"/>
-		<file:read doc:name="Read" doc:id="5fa90cab-a01e-4533-8310-c68f13245b33" config-ref="File_Config" path="carPartners.csv"/>
-		<ee:transform doc:name="Json Payload" doc:id="260e3844-f144-42eb-829e-9690ed980ecd" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="End" doc:id="2a582c87-045f-4554-b029-ba9e0c2e1348" message="Flow Ended"/>
-	</flow>
-	<flow name="postPartners" doc:id="4780ef34-c46c-4506-bbbe-8861264be8e7">
-		<db:insert doc:name="New Partner" doc:id="688d255b-3bd8-4a4b-a1ba-ce620921659e">
-			<db:sql ><![CDATA[INSERT INTO partners
-(partnerName,services,numberOfFlights)
-VALUES (:name,:service, :no)]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	name: payload.partnerName,
-	service: payload.services,
-	no: payload.numberOfFlights
-}]]]></db:input-parameters>
-		</db:insert>
-		<ee:transform doc:name="Json Payload" doc:id="3ca48714-9c4e-42ce-a077-298cc72432be">
-			<ee:message>
-				<ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-{
-	Message: "Partner has been added successfully"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-	</flow>
-	<flow name="getPartnersByID" doc:id="ed5eb6ed-ba89-4be1-b14d-d609b30dcaa4" >
-		<db:select doc:name="GetPartnersByID" doc:id="178e7758-1917-4542-9579-4390e5693994">
-			<db:sql ><![CDATA[select * from partners where partnerId = :partnerId]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{partnerId : attributes.uriParams.partnersId}]]]></db:input-parameters>
-		</db:select>
-		<ee:transform doc:name="Json Payload" doc:id="455e436d-3ab0-41d7-802f-c3876b7de033" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-		<logger level="INFO" doc:name="End" doc:id="74600085-552e-4519-a99b-5eef881d7f8e" message="Flow Ended" />
-	</flow>
-	<flow name="updatePartnersByID" doc:id="f21e5d4b-1dd7-4b46-9307-d6c080cb9f4f">
-		<db:update doc:name="Update Partners" doc:id="477f8860-bebc-4b0e-ad71-89116c751b73">
-			<db:sql><![CDATA[update partners
-set services = :service, numberOfFlights = :no
-where partnerId = :id]]></db:sql>
-			<db:input-parameters><![CDATA[#[{
-	id : attributes.uriParams.partnersId,
-	service : payload.services,
-	no : payload.numberOfFlights
-}]]]></db:input-parameters>
-		</db:update>
-	</flow>
-	<flow name="deletePartnersByID" doc:id="105179b2-a6d0-46e5-ad02-d516967ed3f3" >
-		<db:delete doc:name="Delete Partners" doc:id="c4d86aa8-bd17-4f65-b6fb-ba6f992b933c">
-			<db:sql ><![CDATA[delete from partners where partnerId = :id]]></db:sql>
-			<db:input-parameters ><![CDATA[#[{
-	id : attributes.uriParams.partnersId
-}]]]></db:input-parameters>
-		</db:delete>
-		<ee:transform doc:name="Json Payload" doc:id="22d226f5-becd-4385-8ff1-ad95cfd8f855" >
-			<ee:message >
-				<ee:set-payload ><![CDATA[%dw 2.0
-output application/json
----
-{
-	Message: "Your partner has been removed permanently"
-}]]></ee:set-payload>
-			</ee:message>
-		</ee:transform>
-	</flow>
 </mule>

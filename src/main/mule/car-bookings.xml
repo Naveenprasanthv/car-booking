@@ -12,7 +12,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 		<http:listener doc:name="Listener" doc:id="df972c75-d891-48f4-ae4b-f61139cffd3c" config-ref="HTTP_Listener_config" path="/cars" allowedMethods="GET,POST"/>
 		<choice doc:name="Choice" doc:id="70833f34-d6ab-4b19-9cc9-bb7b89941a85" >
 			<when expression="#[attributes.method == 'GET']">
-				<file:read doc:id="f01b9949-d472-4051-bd62-e859c8f4e9c4" config-ref="File_Config" path="cars.csv" />
+				<file:read doc:id="f01b9949-d472-4051-bd62-e859c8f4e9c4" config-ref="File_Config" path="examples/cars.csv" />
 				<ee:transform doc:name="Json Payload" doc:id="26b47312-26be-4322-90b0-d593c1700718">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0

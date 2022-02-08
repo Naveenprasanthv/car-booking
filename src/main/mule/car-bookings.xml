@@ -68,7 +68,7 @@ output application/json
 						<ee:set-variable variableName="dest" ><![CDATA[%dw 2.0
 output application/json
 ---
-payload.desitation]]></ee:set-variable>
+payload.destination]]></ee:set-variable>
 						<ee:set-variable variableName="ctype" ><![CDATA[%dw 2.0
 output application/json
 ---
@@ -85,7 +85,7 @@ payload map ((item, index) -> {
 	carId: item.carId,
 	price: item.price,
 	origin: item.origin,
-	desitation: item.desitation,
+	destination: item.destination,
 	carType: item.carType
 }) filter ((item, index) -> item.carId == vars.id )]]></ee:set-payload>
 					</ee:message>
@@ -101,7 +101,7 @@ payload map ((item, index) -> {
 	carId: item.carId,
 	price: item.price,
 	origin: item.origin,
-	desitation: vars.dest,
+	destination: vars.dest,
 	carType: vars.ctype
 })]]></ee:set-variable>
 					</ee:variables>
@@ -140,7 +140,7 @@ payload map ((item, index) -> {
 	carId: item.carId,
 	price: item.price,
 	origin: item.origin,
-	desitation: item.desitation,
+	destination: item.destination,
 	carType: item.carType
 }) filter ((item, index) -> item.carId as String == vars.id )]]></ee:set-payload>
 			</ee:message>
@@ -157,7 +157,7 @@ payload map ((item, index) -> {
 	carId: item.carId,
 	price: item.price,
 	origin: item.origin,
-	desitation: item.desitation,
+	destination: item.destination,
 	carType: item.carType
 }) filter ((item, index) -> item.carId as String != vars.id )]]></ee:set-payload>
 					</ee:message>
@@ -169,7 +169,7 @@ payload map ((item, index) -> {
 		<http:listener doc:name="Listener" doc:id="a49463ba-a7d6-4c5f-bb34-8b89e4a895e3" config-ref="HTTP_Listener_config" path="/partners"/>
 		<choice doc:name="Choice" doc:id="3ab13405-cf17-4d1a-ac04-ac83961cd86d" >
 			<when expression="#[attributes.method == 'GET']">
-				<file:read doc:name="Read" doc:id="579e6a15-8ee1-4766-b053-178373eb3b87" config-ref="File_Config" path="carPartners.csv"/>
+				<file:read doc:name="Read" doc:id="579e6a15-8ee1-4766-b053-178373eb3b87" config-ref="File_Config" path="examples/carPartners.csv"/>
 				<ee:transform doc:name="Json Payload" doc:id="670da621-63e4-43b3-90b0-138363caf7e5" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
@@ -181,7 +181,7 @@ payload]]></ee:set-payload>
 				<logger level="INFO" doc:name="Logger" doc:id="8ea35153-5467-40d9-ada6-b6830f8ad44f" message="Flow Ended"/>
 			</when>
 			<when expression="#[attributes.method == 'POST']">
-				<file:write doc:name="Write" doc:id="c1f70529-2745-44ce-b0bf-b3f9a8275c0f" config-ref="File_Config" path="carPartners.csv" mode="APPEND">
+				<file:write doc:name="Write" doc:id="c1f70529-2745-44ce-b0bf-b3f9a8275c0f" config-ref="File_Config" path="examples/carPartners.csv" mode="APPEND">
 					<file:content ><![CDATA[#['\n' ++ payload]]]></file:content>
 				</file:write>
 				<ee:transform doc:name="Json Payload" doc:id="83b6052b-f9df-4675-b371-a653f5f9ab4c" >
@@ -224,7 +224,7 @@ output application/json
 						<ee:set-variable variableName="no" ><![CDATA[payload.numberOfCars]]></ee:set-variable>
 					</ee:variables>
 				</ee:transform>
-				<file:read doc:name="Read" doc:id="815c138f-5a95-499e-b2ab-6e7e815d530c" config-ref="File_Config" path="carPartners.csv"/>
+				<file:read doc:name="Read" doc:id="815c138f-5a95-499e-b2ab-6e7e815d530c" config-ref="File_Config" path="examples/carPartners.csv"/>
 				<ee:transform doc:name="Json Payload" doc:id="e90e0a29-bb69-451f-8193-1bd28cb89169" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
@@ -252,7 +252,7 @@ payload map ((item, index) -> {
 					</ee:variables>
 				</ee:transform>
 				<flow-ref doc:name="Flow Reference" doc:id="2f3edfcd-5930-4c8e-baa1-fa4ce875f2ca" name="deletePartnersById"/>
-				<file:write doc:name="Write" doc:id="f1e60912-359d-4014-9e9f-86c7d7465746" config-ref="File_Config" path="carPartners.csv" mode="APPEND">
+				<file:write doc:name="Write" doc:id="f1e60912-359d-4014-9e9f-86c7d7465746" config-ref="File_Config" path="examples/carPartners.csv" mode="APPEND">
 					<file:content ><![CDATA[#[vars.edited]]]></file:content>
 				</file:write>
 				<set-payload value="Your car numbers has been updated successfully." doc:name="Json Payload" doc:id="1c2e42ca-d0dd-48e4-ada5-477f8771690c" />
@@ -275,7 +275,7 @@ output application/json
 		</choice>
 	</flow>
 	<flow name="getPartnersById" doc:id="8350c647-44b6-4c88-9083-83d25e591bb0" >
-		<file:read doc:name="Read" doc:id="cbf64487-43b6-4c5d-ba71-05f17904dd52" config-ref="File_Config" path="carPartners.csv"/>
+		<file:read doc:name="Read" doc:id="cbf64487-43b6-4c5d-ba71-05f17904dd52" config-ref="File_Config" path="examples/carPartners.csv"/>
 		<ee:transform doc:name="Json Payload" doc:id="2c690dc8-5f68-4e85-9746-aee49540f08f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -290,7 +290,7 @@ payload map ((item, index) -> {
 		</ee:transform>
 	</flow>
 	<flow name="deletePartnersById" doc:id="d65ee9ab-4d56-422d-9927-bf4768e4979b" >
-		<file:read doc:name="Read" doc:id="66f5ebb9-aa01-4e33-a96f-65f96621114b" config-ref="File_Config" path="carPartners.csv"/>
+		<file:read doc:name="Read" doc:id="66f5ebb9-aa01-4e33-a96f-65f96621114b" config-ref="File_Config" path="examples/carPartners.csv"/>
 		<ee:transform doc:name="Transform Message" doc:id="712ada78-3d91-472b-8b55-d7dfdc77bdb2" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
@@ -303,8 +303,161 @@ payload map ((item, index) -> {
 }) filter ((item, index) -> item.partnerId != vars.pid )]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-		<file:write doc:name="Write" doc:id="76880a9b-e013-4b73-ab19-b34816c6f694" config-ref="File_Config" path="carPartners.csv"/>
+		<file:write doc:name="Write" doc:id="76880a9b-e013-4b73-ab19-b34816c6f694" config-ref="File_Config" path="examples/carPartners.csv"/>
 		<set-payload value="Your Partner has been removed successfully." doc:name="JsonPayload" doc:id="5ce8ed96-140e-448a-924f-20a040edc68d" />
+	</flow>
+	<flow name="car-bookings_GET_POST" doc:id="0e0b7ea7-1bf7-4b52-98a1-a391bfb2341b" >
+		<http:listener doc:name="Listener" doc:id="81d8dc8a-3ee2-4bb4-b982-07a4fefa0a82" config-ref="HTTP_Listener_config" path="/booking"/>
+		<choice doc:name="Choice" doc:id="a45fac4b-f224-4ed5-8a7a-c3f81e132bc2" >
+			<when expression='#[attributes.method == "GET"]'>
+				<file:read doc:name="Read" doc:id="2c6dd630-9bdb-443f-bf5d-64c670f871f2" config-ref="File_Config" path="examples/carbooking.csv"/>
+				<ee:transform doc:name="Transform Message" doc:id="d61ef94a-1404-46dd-b4d3-5a3a5d8c2151" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv header = false
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="27d70757-575c-4f71-8775-0380956d07b7" message="Fetched All bookings"/>
+			</when>
+			<when expression='#[attributes.method == "POST"]'>
+				<file:write doc:name="Write" doc:id="f99b763b-4db9-4d7b-a49e-a1e5ea4adfe3" config-ref="File_Config" path="examples/carbooking.csv" mode="APPEND">
+					<file:content ><![CDATA[#["\n" ++ payload]]]></file:content>
+				</file:write>
+				<ee:transform doc:name="Transform Message" doc:id="ff4c9bac-8b00-4bd7-950b-8ba62707dab9" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: "Car has been booked successfully."
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="d80a9567-b9e2-4e37-8342-3dbcc83081c3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="car-bookingsID_GET_POST_DELETE" doc:id="964bd0e9-16aa-4891-945b-a34930728b41" >
+		<http:listener doc:name="Listener" doc:id="06abc4f1-df99-43d0-8437-1b0378d77888" config-ref="HTTP_Listener_config" path="/booking/{bookingid}"/>
+		<set-variable value="#[attributes.uriParams.bookingid]" doc:name="Set Variable" doc:id="febad2e9-ccc1-4737-badb-ee47d5bdc658" variableName="bookingid" />
+		<choice doc:name="Choice" doc:id="25f09d64-a91c-49cb-b564-6a861ad45e18" >
+			<when expression='#[attributes.method == "GET"]'>
+				<flow-ref doc:name="Flow Reference" doc:id="36dcdd40-e808-4e7b-852e-4b34df570bd7" name="car-bookingGETByID"/>
+			</when>
+			<when expression='#[attributes.method == "DELETE"]'>
+				<flow-ref doc:name="Flow Reference" doc:id="b604927e-0f00-4427-8348-70642fcde7b6" name="car-bookingsDELETEbyID"/>
+			</when>
+			<when expression='#[attributes.method == "PATCH"]'>
+				<ee:transform doc:name="Transform Message" doc:id="41ecf830-9b62-4551-9f0d-793c08cc5424" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="passenger" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.passenger]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<file:read doc:name="Read" doc:id="8b1d1879-a6d4-4b82-8e3d-ae0b6d9ec4f0" config-ref="File_Config" path="examples/carbooking.csv"/>
+				<ee:transform doc:name="Transform Message" doc:id="c0b3428f-06b5-4626-995b-a55777d7824b" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv 
+---
+payload map ((item, index) -> {
+	bookingId: item.bookingId,
+	passenger: item.passenger,
+	carId: item.carId,
+}) filter ((item, index) -> item.bookingId as String == vars.bookingid )]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="d45b0502-c61a-41f5-b26c-be0ecf3ff39e" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="edited" ><![CDATA[%dw 2.0
+output application/csv header = false
+--- 
+payload map ((item, index) -> {
+	bookingId: item.bookingId,
+	passenger: vars.passenger,
+	carId: item.carId
+})]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="03095ed3-e316-4af1-8055-6ed0c19bf19e" name="car-bookingsDELETEbyID"/>
+				<file:write doc:name="Write" doc:id="221105ee-271b-4cd0-8bd4-2075e3c8c392" config-ref="File_Config" path="examples/carbooking.csv" mode="APPEND">
+					<file:content ><![CDATA[#[vars.edited]]]></file:content>
+				</file:write>
+				<set-payload value="passenger name has been updated successfully. " doc:name="Set Payload" doc:id="66b7985d-652a-4291-8944-7b6bf6b4b664" />
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="84db0e7d-a48a-4fe6-816a-43521f78216a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Message: 'OOPS!, you have entered some invalid fields.'
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="car-bookingGETByID" doc:id="ec5e4e8d-d41b-467f-a0f2-feb813f755c0" >
+		<file:read doc:name="Read" doc:id="e8a340ee-c54f-432b-9a8c-f5acac7586d6" config-ref="File_Config" path="examples/carbooking.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="90994110-5997-4a12-b95f-315430868430">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/csv header = false
+---
+payload map ((item, index) -> {
+	bookingId: item.bookingId,
+	passenger: item.passenger,
+	carId: item.carId,
+}) filter ((item, index) -> item.bookingId as String == vars.bookingid )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="car-bookingsDELETEbyID" doc:id="7410753c-be95-4b90-87db-8d46a4e04f4f" >
+		<file:read doc:name="Read" doc:id="8aea5254-610b-4664-943e-ed1c3d850f49" config-ref="File_Config" path="examples/carbooking.csv"/>
+		<ee:transform doc:name="Transform Message" doc:id="4bd5cf54-9031-4003-b444-d81824f82737" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/csv 
+---
+payload map ((item, index) -> {
+	bookingId: item.bookingId,
+	passenger: item.passenger,
+	carId: item.carId,
+}) filter ((item, index) -> item.bookingId as String != vars.bookingid )]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="2e4cfc43-e3f7-4b9d-aeeb-54acd50f25d9" config-ref="File_Config" path="examples/carbooking.csv"/>
+		<set-payload value="Your Car has been cancelled successfully." doc:name="Set Payload" doc:id="47dcead1-4f0d-4978-b32d-b58243f4c392" />
 	</flow>
 
 </mule>

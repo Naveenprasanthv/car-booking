@@ -1,0 +1,4 @@
+%dw 2.0
+
+type auto_7410753c_be95_4b90_87db_8d46a4e04f4f_Input_Variables_bookingid = String | Null
+

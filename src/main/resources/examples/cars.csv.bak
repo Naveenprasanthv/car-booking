@@ -1,0 +1,8 @@
+carId,price,origin,destination,carType
+1,150,Docklands,,Prime
+2,200,Rathmines,,Sedan
+3,250,Ranelagh,,Nano
+4,400,Dalkey,,SUV
+25,5500,Punjab,,Prime
+50,5500,Punjab,,Prime
+56,5500,kondalampatti,Dundrum,Prime

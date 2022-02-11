@@ -4,4 +4,8 @@ carId,price,origin,destination,carType
 3,250,Ranelagh,Fairlands,Nano
 4,400,Dalkey,Ammapet,SUV
 25,5500,Punjab,Wakanda,Prime
-50,5500,Punjab,Dublin,Prime
+66,400,Ammapet,Sevvapet,SUV
+66,400,Ammapet,Sevvapet,SUV
+66,400,Ammapet,Saidapet,SUV
+6699,400,Ammapet,Saidapet,SUV
+

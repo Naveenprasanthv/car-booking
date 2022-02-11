@@ -16,7 +16,7 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 				<ee:transform doc:name="Json Payload" doc:id="26b47312-26be-4322-90b0-d593c1700718">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/csv header=false
+output application/csv
 ---
 payload]]></ee:set-payload>
 			</ee:message>
@@ -134,7 +134,7 @@ output application/json
 		<ee:transform doc:name="Json Payload" doc:id="f07e8e5e-7b78-43f8-acb3-e98256e6002d">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/csv header = false
+output application/csv 
 ---
 payload map ((item, index) -> {
 	carId: item.carId,
@@ -173,7 +173,7 @@ payload map ((item, index) -> {
 				<ee:transform doc:name="Json Payload" doc:id="670da621-63e4-43b3-90b0-138363caf7e5" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
-output application/csv header = false
+output application/csv 
 ---
 payload]]></ee:set-payload>
 					</ee:message>
@@ -279,7 +279,7 @@ output application/json
 		<ee:transform doc:name="Json Payload" doc:id="2c690dc8-5f68-4e85-9746-aee49540f08f" >
 			<ee:message >
 				<ee:set-payload ><![CDATA[%dw 2.0
-output application/csv header = false
+output application/csv 
 ---
 payload map ((item, index) -> {
 	partnerId: item.partnerId,
@@ -314,7 +314,7 @@ payload map ((item, index) -> {
 				<ee:transform doc:name="Transform Message" doc:id="d61ef94a-1404-46dd-b4d3-5a3a5d8c2151" >
 					<ee:message >
 						<ee:set-payload ><![CDATA[%dw 2.0
-output application/csv header = false
+output application/csv 
 ---
 payload]]></ee:set-payload>
 					</ee:message>
@@ -432,7 +432,7 @@ output application/json
 		<ee:transform doc:name="Transform Message" doc:id="90994110-5997-4a12-b95f-315430868430">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
-output application/csv header = false
+output application/csv 
 ---
 payload map ((item, index) -> {
 	bookingId: item.bookingId,

@@ -361,57 +361,7 @@ output application/json
 				<flow-ref doc:name="Flow Reference" doc:id="b604927e-0f00-4427-8348-70642fcde7b6" name="car-bookingsDELETEbyID"/>
 			</when>
 			<when expression='#[attributes.method == "PATCH"]'>
-				<ee:transform doc:name="Transform Message" doc:id="41ecf830-9b62-4551-9f0d-793c08cc5424" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{}]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="passenger" ><![CDATA[%dw 2.0
-output application/json
----
-payload.passenger]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<file:read doc:name="Read" doc:id="8b1d1879-a6d4-4b82-8e3d-ae0b6d9ec4f0" config-ref="File_Config" path="examples/carbooking.csv"/>
-				<ee:transform doc:name="Transform Message" doc:id="c0b3428f-06b5-4626-995b-a55777d7824b" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/csv 
----
-payload map ((item, index) -> {
-	bookingId: item.bookingId,
-	passenger: item.passenger,
-	carId: item.carId,
-}) filter ((item, index) -> item.bookingId as String == vars.bookingid )]]></ee:set-payload>
-					</ee:message>
-				</ee:transform>
-				<ee:transform doc:name="Transform Message" doc:id="d45b0502-c61a-41f5-b26c-be0ecf3ff39e" >
-					<ee:message >
-						<ee:set-payload ><![CDATA[%dw 2.0
-output application/java
----
-{
-}]]></ee:set-payload>
-					</ee:message>
-					<ee:variables >
-						<ee:set-variable variableName="edited" ><![CDATA[%dw 2.0
-output application/csv header = false
---- 
-payload map ((item, index) -> {
-	bookingId: item.bookingId,
-	passenger: vars.passenger,
-	carId: item.carId
-})]]></ee:set-variable>
-					</ee:variables>
-				</ee:transform>
-				<flow-ref doc:name="Flow Reference" doc:id="03095ed3-e316-4af1-8055-6ed0c19bf19e" name="car-bookingsDELETEbyID"/>
-				<file:write doc:name="Write" doc:id="221105ee-271b-4cd0-8bd4-2075e3c8c392" config-ref="File_Config" path="examples/carbooking.csv" mode="APPEND">
-					<file:content ><![CDATA[#[vars.edited]]]></file:content>
-				</file:write>
-				<set-payload value="passenger name has been updated successfully. " doc:name="Set Payload" doc:id="66b7985d-652a-4291-8944-7b6bf6b4b664" />
+				<set-payload value="Can't change the destination, Please cancel your booking and re-book it." doc:name="Set Payload" doc:id="66b7985d-652a-4291-8944-7b6bf6b4b664" />
 			</when>
 			<otherwise >
 				<ee:transform doc:name="Transform Message" doc:id="84db0e7d-a48a-4fe6-816a-43521f78216a" >
